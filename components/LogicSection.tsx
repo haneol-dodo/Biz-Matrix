@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { trackAction } from '../services/analyticsService';
 import { LogicBreakdown, AnalysisResult } from '../types';
 
 interface LogicSectionProps {
@@ -10,6 +11,7 @@ interface LogicSectionProps {
 
 export const LogicSection: React.FC<LogicSectionProps> = ({ logic, result, field }) => {
   const handleExportTxt = () => {
+    trackAction('txt_export', field);
     let content = `[비즈니스 기회 발견 매트릭스 리포트 - ${field}]\n\n`;
     result.matrix.forEach(row => {
       content += `전략: ${row.strategy}\n`;
@@ -22,6 +24,11 @@ export const LogicSection: React.FC<LogicSectionProps> = ({ logic, result, field
     link.href = URL.createObjectURL(blob);
     link.download = `biz-report-${field}.txt`;
     link.click();
+  };
+
+  const handlePrint = () => {
+    trackAction('pdf_export', field);
+    window.print();
   };
 
   return (
@@ -89,8 +96,8 @@ export const LogicSection: React.FC<LogicSectionProps> = ({ logic, result, field
 
       <div className="pt-12 border-t border-slate-100 flex flex-col items-center gap-4 print:hidden">
         <div className="flex gap-4">
-          <button 
-            onClick={() => window.print()} 
+          <button
+            onClick={handlePrint}
             className="text-[12px] font-semibold bg-slate-900 text-white flex items-center gap-2 px-6 py-3 rounded-md hover:bg-slate-800 transition-colors shadow-sm"
           >
             <i className="fa-solid fa-file-pdf"></i> 리포트 PDF 저장 / 인쇄

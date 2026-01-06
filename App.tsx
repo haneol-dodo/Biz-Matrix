@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { generateBusinessIdeas } from './services/geminiService';
+import { trackAction } from './services/analyticsService';
 import { AnalysisResult } from './types';
 import { LogicSection } from './components/LogicSection';
 
@@ -26,6 +27,11 @@ const App: React.FC = () => {
 
   const shuffleIndexRef = useRef(0);
 
+  // Track page visit on mount
+  useEffect(() => {
+    trackAction('page_visit');
+  }, []);
+
   // Safe Shuffle Logic
   useEffect(() => {
     if (isInteracted || isFocused || loading || result) return;
@@ -42,14 +48,18 @@ const App: React.FC = () => {
     if (e) e.preventDefault();
     if (!field.trim() || loading) return;
 
+    const fieldValue = field.trim();
+    trackAction('search_execution', fieldValue);
+
     setLoading(true);
     setError(null);
     setResult(null);
-    setLastAnalyzedField(field.trim());
+    setLastAnalyzedField(fieldValue);
 
     try {
-      const data = await generateBusinessIdeas(field.trim());
+      const data = await generateBusinessIdeas(fieldValue);
       setResult(data);
+      trackAction('result_view', fieldValue);
     } catch (err) {
       setError('분석 과정에서 오류가 발생했습니다. 나중에 다시 시도해 주세요.');
       console.error(err);
@@ -63,9 +73,19 @@ const App: React.FC = () => {
     setIsInteracted(true);
   };
 
+  const handleInputFocus = () => {
+    setIsFocused(true);
+    trackAction('input_focus');
+  };
+
+  const handleInputBlur = () => {
+    setIsFocused(false);
+  };
+
   const handleClear = () => {
     setField('');
     setIsInteracted(true);
+    trackAction('input_clear');
   };
 
   return (
@@ -105,8 +125,8 @@ const App: React.FC = () => {
               type="text"
               value={field}
               onChange={handleInputChange}
-              onFocus={() => setIsFocused(true)}
-              onBlur={() => setIsFocused(false)}
+              onFocus={handleInputFocus}
+              onBlur={handleInputBlur}
               className="flex-grow py-5 text-lg font-medium bg-transparent outline-none text-slate-800 placeholder:text-slate-300"
               spellCheck={false}
             />
